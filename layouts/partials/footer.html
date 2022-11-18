@@ -1,0 +1,21 @@
+<!--
+ Copyright (c) 2022 David Chan
+
+ This software is released under the MIT License.
+ https://opensource.org/licenses/MIT
+-->
+
+<script>
+    var els = document.getElementsByClassName('highlight');
+    for (var i = 0; i < els.length; i++) {
+        if (els[i].title.length) {
+            var newNode = document.createElement('div');
+            newNode.style =
+                'position: absolute; bottom: 0; right: 0; margin-right: 1em; margin-bottom: 0.25em; font-size: small;';
+            var textNode = document.createTextNode(els[i].title);
+            newNode.appendChild(textNode);
+            newNode.classList.add('highlight-title');
+            els[i].appendChild(newNode, els[i]);
+        }
+    }
+</script>
