@@ -24,7 +24,9 @@ showtoc = false
 tocopen = false
 description = "Examples of things I've learned today"
 socialIcons = [{name = "rss", url = "https://til.dchan.cc/posts/index.xml"},]
-assets.disableFingerprinting = true
+
+[params.assets]
+disableFingerprinting = true
 
 [params.homeInfoParams]
 content = "Hi! I'm David. Here are some things I've learned..."
