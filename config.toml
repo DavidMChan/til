@@ -1,4 +1,4 @@
-baseURL = 'https://til.dchan.cc'
+# baseURL = 'https://til.dchan.cc'
 languageCode = 'en-us'
 title = 'David Chan - Today I Learned (TIL)'
 theme = "papermod"
