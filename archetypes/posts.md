@@ -1,5 +1,5 @@
 ---
-title: "{{ replace .Name "-" " " | title }}"
+title: "TITLE_TEMPLATE"
 date: {{ .Date }}
 showToc: true
 TocOpen: false
