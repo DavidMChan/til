@@ -1,0 +1,40 @@
+{{- $publisherType := ( site.Params.schema.publisherType | default "Organization") | title -}} {{- if .IsHome -}} {{-
+$sameAs := slice -}} {{- if site.Params.schema.sameAs -}} {{- range site.Params.schema.sameAs -}} {{- $sameAs = $sameAs
+| append (trim . " ") -}} {{- end -}} {{- else -}} {{- range site.Params.SocialIcons -}} {{- $sameAs = $sameAs | append
+(trim .url " ") -}} {{- end -}} {{- end -}} {{- $homeData := dict "@context" "https://schema.org" "@type" $publisherType
+"name" site.Title "url" site.BaseURL "description" (site.Params.description | plainify | truncate 180) "thumbnailUrl"
+(site.Params.assets.favicon | default "favicon.ico" | absURL) "sameAs" $sameAs -}}
+<script type="application/ld+json">
+    {{ $homeData | jsonify }}
+</script>
+{{- else if (or .IsPage .IsSection) -}} {{- $url := replace .Parent.Permalink (printf "%s" site.BaseURL) "" -}} {{-
+$langURL := strings.TrimPrefix (printf "%s/" .Lang) $url -}} {{- $segments := slice -}} {{- range (split $langURL "/")
+-}} {{- if gt (len .) 0 -}} {{- $segments = $segments | append . -}} {{- end -}} {{- end -}} {{- $breadcrumbs := slice
+-}} {{- $path := "" -}} {{- range $segments -}} {{- $path = printf "%s%s/" $path . -}} {{- with site.GetPage $path -}}
+{{- $breadcrumbs = $breadcrumbs | append (dict "@type" "ListItem" "position" (add (len $breadcrumbs) 1) "name" .Name
+"item" .Permalink) -}} {{- end -}} {{- end -}} {{- $selfItem := dict "@type" "ListItem" "position" (add (len
+$breadcrumbs) 1) "name" .Name "item" .Permalink -}} {{- $breadcrumbs = $breadcrumbs | append $selfItem -}} {{-
+$breadcrumbData := dict "@context" "https://schema.org" "@type" "BreadcrumbList" "itemListElement" $breadcrumbs -}}
+<script type="application/ld+json">
+    {{ $breadcrumbData | jsonify }}
+</script>
+{{- if .IsPage -}} {{- $description := "" -}} {{- with .Description -}} {{- $description = . | plainify -}} {{- else -}}
+{{- $description = .Summary | plainify -}} {{- end -}} {{- $keywords := slice -}} {{- if .Params.keywords -}} {{- range
+.Params.keywords -}} {{- $keywords = $keywords | append . -}} {{- end -}} {{- else -}} {{- range .Params.tags -}} {{-
+$keywords = $keywords | append . -}} {{- end -}} {{- end -}} {{- $article := dict "@context" "https://schema.org"
+"@type" "BlogPosting" "headline" (.Title | plainify) "name" (.Title | plainify) "description" $description "keywords"
+$keywords "articleBody" (.Plain | plainify) "wordCount" .WordCount "inLanguage" (.Language.Lang | default "en-us")
+"datePublished" .PublishDate "dateModified" .Lastmod "mainEntityOfPage" (dict "@type" "WebPage" "@id" .Permalink)
+"publisher" (dict "@type" $publisherType "name" site.Title "logo" (dict "@type" "ImageObject" "url"
+(site.Params.assets.favicon | default "favicon.ico" | absURL))) -}} {{- with .Params.cover.image -}} {{- $imageURL := .
+| absURL -}} {{- if eq $.Params.cover.relative true -}} {{- $imageURL = (path.Join $.RelPermalink .) | absURL -}} {{-
+end -}} {{- $article = merge $article (dict "image" $imageURL) -}} {{- end -}} {{- with (.Params.author | default
+site.Params.author) -}} {{- $authorValue := . -}} {{- $authorKey := dict -}} {{- $authorList := slice -}} {{- $type :=
+printf "%T" $authorValue -}} {{- if or (eq $type "[]string") (eq $type "[]interface {}") -}} {{- range $authorValue -}}
+{{- $authorList = $authorList | append (dict "@type" "Person" "name" .) -}} {{- end -}} {{- $authorKey = dict "author"
+$authorList -}} {{- else -}} {{- $authorKey = dict "author" (dict "@type" "Person" "name" $authorValue) -}} {{- end -}}
+{{- $article = merge $article $authorKey -}} {{- end -}}
+<script type="application/ld+json">
+    {{ $article | jsonify }}
+</script>
+{{- end -}} {{- end -}}

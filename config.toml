@@ -8,9 +8,10 @@ buildDrafts = false
 buildFuture = false
 buildExpired = false
 
-minify = {disableXML = true, minifyOutput = true}
-outputs = {home = ['HTML', 'RSS', 'JSON']}
+minify = { disableXML = true, minifyOutput = true }
+outputs = { home = ['HTML', 'RSS', 'JSON'] }
 env = "production"
+ignoreLogs = ['warning-goldmark-raw-html']
 
 
 [params]
@@ -23,7 +24,7 @@ comments = false
 showtoc = false
 tocopen = false
 description = "Examples of things I've learned today"
-socialIcons = [{name = "rss", url = "https://til.dchan.cc/posts/index.xml"},]
+socialIcons = [{ name = "rss", url = "https://til.dchan.cc/posts/index.xml" }]
 
 [params.assets]
 disableFingerprinting = true
@@ -32,4 +33,8 @@ disableFingerprinting = true
 content = "Hi! I'm David. Here are some things I've learned..."
 
 [menu]
-main = [{identifier="search", name="Search", url="/search", weight=1}, {identifier="archives", name="Archives", url="/posts", weight=2}, {identifier="About", name="Me", url="https://dchan.cc", weight=3}]
+main = [
+    { identifier = "search", name = "Search", url = "/search", weight = 1 },
+    { identifier = "archives", name = "Archives", url = "/posts", weight = 2 },
+    { identifier = "About", name = "Me", url = "https://dchan.cc", weight = 3 },
+]
