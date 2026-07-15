@@ -1,0 +1,16 @@
+{{- /* Head extras that mirror the home domain (https://dchan.cc). PaperMod's
+       head.html already emits charset, viewport, robots, description, author,
+       canonical, OpenGraph, Twitter cards and a light theme-color. */ -}}
+
+{{- /* Match dchan.cc's rendering hints. */ -}}
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="no-referrer-when-downgrade">
+<meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
+
+{{- /* Richer image previews in search, matching dchan.cc's robots directives.
+       Combines with PaperMod's "index, follow" tag; only in production. */ -}}
+{{- if hugo.IsProduction | or (eq site.Params.env "production") }}
+{{- if ne .Params.robotsNoIndex true }}
+<meta name="robots" content="max-image-preview:large">
+{{- end }}
+{{- end }}

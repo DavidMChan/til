@@ -1,40 +1,126 @@
-{{- $publisherType := ( site.Params.schema.publisherType | default "Organization") | title -}} {{- if .IsHome -}} {{-
-$sameAs := slice -}} {{- if site.Params.schema.sameAs -}} {{- range site.Params.schema.sameAs -}} {{- $sameAs = $sameAs
-| append (trim . " ") -}} {{- end -}} {{- else -}} {{- range site.Params.SocialIcons -}} {{- $sameAs = $sameAs | append
-(trim .url " ") -}} {{- end -}} {{- end -}} {{- $homeData := dict "@context" "https://schema.org" "@type" $publisherType
-"name" site.Title "url" site.BaseURL "description" (site.Params.description | plainify | truncate 180) "thumbnailUrl"
-(site.Params.assets.favicon | default "favicon.ico" | absURL) "sameAs" $sameAs -}}
+{{- /*
+  Unified structured data for til.dchan.cc.
+
+  Every page describes the SAME author entity as the home domain
+  (https://dchan.cc) by reusing its Person @id — so search engines treat both
+  sites as one identity. Configure via [params.schema] in config.toml.
+
+  Dynamic string values go through `jsonify | safeJS`. jsonify emits a fully
+  quoted, escaped JSON string (escaping "<", ">", "&" as \uXXXX); safeJS then
+  stops Hugo's html/template from re-escaping it a second time inside the
+  <script> (JS) context. Together they keep titles/descriptions containing
+  quotes or "<" from breaking the document or injecting markup.
+*/ -}}
+{{- $s := site.Params.schema -}}
+{{- $personId := $s.person | default (printf "%s#person" site.BaseURL) -}}
+{{- $homeURL := $s.homeURL | default site.BaseURL -}}
+{{- $image := $s.image | default (printf "%sog-image.jpeg" site.BaseURL) -}}
+{{- $sameAs := $s.sameAs | default slice -}}
+{{- $siteId := printf "%s#website" site.BaseURL -}}
+{{- $blogId := printf "%s#blog" site.BaseURL -}}
+{{- $lang := site.Language.LanguageCode | default "en-us" -}}
+{{- $iso := "2006-01-02T15:04:05-07:00" -}}
+{{- $person := printf `{
+      "@type": "Person",
+      "@id": "%s",
+      "name": "David M. Chan",
+      "givenName": "David",
+      "additionalName": "M.",
+      "familyName": "Chan",
+      "url": "%s",
+      "image": "%s",
+      "sameAs": %s
+    }` $personId $homeURL $image ($sameAs | jsonify) -}}
+
+{{- if .IsHome -}}
 <script type="application/ld+json">
-    {{ $homeData | jsonify }}
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "{{ $siteId }}",
+      "url": "{{ site.BaseURL }}",
+      "name": {{ site.Title | plainify | jsonify | safeJS }},
+      "description": {{ site.Params.description | plainify | jsonify | safeJS }},
+      "inLanguage": "{{ $lang }}",
+      "publisher": { "@id": "{{ $personId }}" }
+    },
+    {
+      "@type": "Blog",
+      "@id": "{{ $blogId }}",
+      "url": "{{ site.BaseURL }}",
+      "name": {{ site.Title | plainify | jsonify | safeJS }},
+      "description": {{ site.Params.description | plainify | jsonify | safeJS }},
+      "inLanguage": "{{ $lang }}",
+      "isPartOf": { "@id": "{{ $siteId }}" },
+      "author": { "@id": "{{ $personId }}" }
+    },
+    {{ $person | safeJS }}
+  ]
+}
 </script>
-{{- else if (or .IsPage .IsSection) -}} {{- $url := replace .Parent.Permalink (printf "%s" site.BaseURL) "" -}} {{-
-$langURL := strings.TrimPrefix (printf "%s/" .Lang) $url -}} {{- $segments := slice -}} {{- range (split $langURL "/")
--}} {{- if gt (len .) 0 -}} {{- $segments = $segments | append . -}} {{- end -}} {{- end -}} {{- $breadcrumbs := slice
--}} {{- $path := "" -}} {{- range $segments -}} {{- $path = printf "%s%s/" $path . -}} {{- with site.GetPage $path -}}
-{{- $breadcrumbs = $breadcrumbs | append (dict "@type" "ListItem" "position" (add (len $breadcrumbs) 1) "name" .Name
-"item" .Permalink) -}} {{- end -}} {{- end -}} {{- $selfItem := dict "@type" "ListItem" "position" (add (len
-$breadcrumbs) 1) "name" .Name "item" .Permalink -}} {{- $breadcrumbs = $breadcrumbs | append $selfItem -}} {{-
-$breadcrumbData := dict "@context" "https://schema.org" "@type" "BreadcrumbList" "itemListElement" $breadcrumbs -}}
+{{- else if and .IsPage (eq .Section "posts") -}}
+{{- $description := "" -}}
+{{- with .Description }}{{ $description = . | plainify | htmlUnescape | chomp }}{{ else }}{{ $description = .Summary | plainify | htmlUnescape | chomp }}{{ end -}}
+{{- $keywords := slice -}}
+{{- with .Params.keywords }}{{ $keywords = . }}{{ else }}{{ with .Params.tags }}{{ $keywords = . }}{{ end }}{{ end -}}
 <script type="application/ld+json">
-    {{ $breadcrumbData | jsonify }}
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BlogPosting",
+      "@id": "{{ .Permalink }}#article",
+      "headline": {{ .Title | plainify | jsonify | safeJS }},
+      "name": {{ .Title | plainify | jsonify | safeJS }},
+      "description": {{ $description | jsonify | safeJS }},
+      "url": "{{ .Permalink }}",
+      "datePublished": "{{ .PublishDate.Format $iso }}",
+      "dateModified": "{{ .Lastmod.Format $iso }}",
+      "wordCount": {{ .WordCount }},
+      "inLanguage": "{{ $lang }}",
+      "keywords": {{ $keywords | jsonify | safeJS }},
+      "image": "{{ $image }}",
+      "isPartOf": { "@id": "{{ $blogId }}" },
+      "mainEntityOfPage": "{{ .Permalink }}",
+      "author": { "@id": "{{ $personId }}" },
+      "publisher": { "@id": "{{ $personId }}" }
+    },
+    {{ $person | safeJS }},
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ site.BaseURL }}" },
+        { "@type": "ListItem", "position": 2, "name": "Posts", "item": "{{ (site.GetPage "/posts").Permalink }}" },
+        { "@type": "ListItem", "position": 3, "name": {{ .Title | plainify | jsonify | safeJS }}, "item": "{{ .Permalink }}" }
+      ]
+    }
+  ]
+}
 </script>
-{{- if .IsPage -}} {{- $description := "" -}} {{- with .Description -}} {{- $description = . | plainify -}} {{- else -}}
-{{- $description = .Summary | plainify -}} {{- end -}} {{- $keywords := slice -}} {{- if .Params.keywords -}} {{- range
-.Params.keywords -}} {{- $keywords = $keywords | append . -}} {{- end -}} {{- else -}} {{- range .Params.tags -}} {{-
-$keywords = $keywords | append . -}} {{- end -}} {{- end -}} {{- $article := dict "@context" "https://schema.org"
-"@type" "BlogPosting" "headline" (.Title | plainify) "name" (.Title | plainify) "description" $description "keywords"
-$keywords "articleBody" (.Plain | plainify) "wordCount" .WordCount "inLanguage" (.Language.Lang | default "en-us")
-"datePublished" .PublishDate "dateModified" .Lastmod "mainEntityOfPage" (dict "@type" "WebPage" "@id" .Permalink)
-"publisher" (dict "@type" $publisherType "name" site.Title "logo" (dict "@type" "ImageObject" "url"
-(site.Params.assets.favicon | default "favicon.ico" | absURL))) -}} {{- with .Params.cover.image -}} {{- $imageURL := .
-| absURL -}} {{- if eq $.Params.cover.relative true -}} {{- $imageURL = (path.Join $.RelPermalink .) | absURL -}} {{-
-end -}} {{- $article = merge $article (dict "image" $imageURL) -}} {{- end -}} {{- with (.Params.author | default
-site.Params.author) -}} {{- $authorValue := . -}} {{- $authorKey := dict -}} {{- $authorList := slice -}} {{- $type :=
-printf "%T" $authorValue -}} {{- if or (eq $type "[]string") (eq $type "[]interface {}") -}} {{- range $authorValue -}}
-{{- $authorList = $authorList | append (dict "@type" "Person" "name" .) -}} {{- end -}} {{- $authorKey = dict "author"
-$authorList -}} {{- else -}} {{- $authorKey = dict "author" (dict "@type" "Person" "name" $authorValue) -}} {{- end -}}
-{{- $article = merge $article $authorKey -}} {{- end -}}
+{{- else if or .IsSection .IsPage -}}
 <script type="application/ld+json">
-    {{ $article | jsonify }}
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "{{ cond .IsSection "CollectionPage" "WebPage" }}",
+      "@id": "{{ .Permalink }}#webpage",
+      "url": "{{ .Permalink }}",
+      "name": {{ .Title | plainify | jsonify | safeJS }},
+      "description": {{ (or .Description site.Params.description) | plainify | htmlUnescape | chomp | jsonify | safeJS }},
+      "inLanguage": "{{ $lang }}",
+      "isPartOf": { "@id": "{{ $siteId }}" }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ site.BaseURL }}" },
+        { "@type": "ListItem", "position": 2, "name": {{ .Title | plainify | jsonify | safeJS }}, "item": "{{ .Permalink }}" }
+      ]
+    }
+  ]
+}
 </script>
-{{- end -}} {{- end -}}
+{{- end -}}

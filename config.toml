@@ -1,6 +1,6 @@
-# baseURL = 'https://til.dchan.cc'
+baseURL = 'https://til.dchan.cc/'
 languageCode = 'en-us'
-title = 'David Chan - Today I Learned (TIL)'
+title = 'David M. Chan — Today I Learned (TIL)'
 theme = "papermod"
 
 enableRobotsTXT = true
@@ -8,13 +8,39 @@ buildDrafts = false
 buildFuture = false
 buildExpired = false
 
+# No post uses tags/categories, so their list pages are empty. Dropping these
+# kinds keeps thin, zero-value URLs out of the sitemap (matching dchan.cc, which
+# lists only meaningful pages).
+disableKinds = ["taxonomy", "term"]
+
 minify = { disableXML = true, minifyOutput = true }
 outputs = { home = ['HTML', 'RSS', 'JSON'] }
 env = "production"
 ignoreLogs = ['warning-goldmark-raw-html']
 
+# Canonical author identity — the same person defined on https://dchan.cc so the
+# two sites read as one entity to search engines. See [params.schema] below.
+[author]
+name = "David M. Chan"
 
 [params]
+author = "David M. Chan"
+description = "Short, practical notes from David M. Chan on things worth remembering — programming, machine learning, infrastructure, and developer tooling."
+keywords = [
+    "David M. Chan",
+    "Today I Learned",
+    "TIL",
+    "programming",
+    "machine learning",
+    "software engineering",
+    "infrastructure",
+    "developer notes",
+]
+# Default social-share image (shared with dchan.cc). Resolved to an absolute URL
+# by PaperMod's opengraph/twitter partials via site.Params.images.
+images = ["og-image.jpeg"]
+DateFormat = "January 2, 2006"
+
 ShowReadingTime = true
 ShowBreadCrumbs = true
 ShowCodeCopyButtons = true
@@ -23,14 +49,40 @@ UseHugoToc = true
 comments = false
 showtoc = false
 tocopen = false
-description = "Examples of things I've learned today"
 socialIcons = [{ name = "rss", url = "https://til.dchan.cc/posts/index.xml" }]
-
-[params.assets]
-disableFingerprinting = true
 
 [params.homeInfoParams]
 content = "Hi! I'm David. Here are some things I've learned..."
+
+[params.assets]
+disableFingerprinting = true
+favicon = "favicon.ico"
+# Light default; the dark variant is added in layouts/partials/extend_head.html
+# to match https://dchan.cc.
+theme_color = "#ffffff"
+msapplication_TileColor = "#ffffff"
+
+# Enables <meta name="twitter:site"> in PaperMod's twitter_cards.html.
+[params.social]
+twitter = "_dmchan"
+
+# Consumed by layouts/partials/templates/schema_json.html. `person` is the
+# canonical Person @id shared with https://dchan.cc so both domains describe the
+# same author; `sameAs` mirrors that profile's links.
+[params.schema]
+person = "https://dchan.cc/#person"
+homeURL = "https://dchan.cc/"
+image = "https://til.dchan.cc/og-image.jpeg"
+sameAs = [
+    "https://dchan.cc",
+    "https://scholar.google.com/citations?user=qa4M89wAAAAJ&hl=en",
+    "https://github.com/DavidMChan",
+    "https://www.linkedin.com/in/david-m-chan/",
+    "https://twitter.com/_dmchan",
+    "https://fosstodon.org/@davidchan",
+    "https://dblp.org/pid/80/9659.html",
+    "https://aclanthology.org/people/david-m-chan/",
+]
 
 [menu]
 main = [
